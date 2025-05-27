@@ -1009,13 +1009,18 @@ class RegionGrowingAlgorithm(RegionGrowingAlgorithmBase):
 
                     # Check whether the volume started decreasing
                     if previous_volume > volume:
+                        lod_val = self.analysis.uncertainties["lodetection"][i, target_idx]  # cd_liu 
+                        # Next step: instead of target_idx, find the max abs change of distance 
+                        # so only add seed if larger than minimum period and height of the change (comparing with threshold)
+
                         # Only add seed if larger than the minimum period and height of the change form larger than threshold
                         if (target_idx - start_idx >= self.minperiod) and (
                             np.abs(
                                 np.max(used_timeseries[start_idx : target_idx + 1])
                                 - np.min(used_timeseries[start_idx : target_idx + 1])
                             )
-                            >= self.height_threshold
+                            >= lod_val # Previously height_threshold, adapted to compare with level of detection for each object  #cd_liu
+                            #>= self.height_threshold  #cd_liu
                         ):
                             corepoint_seeds.append(
                                 RegionGrowingSeed(i, start_idx, target_idx)
