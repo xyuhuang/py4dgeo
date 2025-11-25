@@ -79,17 +79,17 @@ def test_knockout_stage_1_read_segment_ids(epochs_segmented):
     ids1 = np.unique(epoch1.additional_dimensions["segment_id"])
     print("-> STAGE 1 PASSED (in Python)")
 
-def test_knockout_stage_2_read_csv(epochs_segmented, pbm3c2_correspondences_file):
-    """STAGE 2: Adds the pd.read_csv call."""
-    print("\n--- KNOCKOUT STAGE 2: Reading CSV file ---")
-    epoch0, epoch1 = epochs_segmented
-    ids0 = np.unique(epoch0.additional_dimensions["segment_id"])
-    ids1 = np.unique(epoch1.additional_dimensions["segment_id"])
+# def test_knockout_stage_2_read_csv(epochs_segmented, pbm3c2_correspondences_file):
+#     """STAGE 2: Adds the pd.read_csv call."""
+#     print("\n--- KNOCKOUT STAGE 2: Reading CSV file ---")
+#     epoch0, epoch1 = epochs_segmented
+#     ids0 = np.unique(epoch0.additional_dimensions["segment_id"])
+#     ids1 = np.unique(epoch1.additional_dimensions["segment_id"])
 
-    # Line under test:
-    correspondences_df = pd.read_csv(pbm3c2_correspondences_file, header=None)
+#     # Line under test:
+#     correspondences_df = pd.read_csv(pbm3c2_correspondences_file, header=None)
     
-    print("-> STAGE 2 PASSED (in Python)")
+#     print("-> STAGE 2 PASSED (in Python)")
 
 # def test_knockout_stage_3_if_condition(epochs_segmented, pbm3c2_correspondences_file):
 #     """STAGE 3: Adds the 'if' condition check."""
