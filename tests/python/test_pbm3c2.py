@@ -4,6 +4,7 @@ import pytest
 import os
 import logging
 import pandas as pd
+import gc
 
 def test_read_segmented_epochs(epochs_segmented, pbm3c2_correspondences_file):
     epoch0, epoch1 = epochs_segmented
@@ -55,19 +56,19 @@ def cleanup_after_test():
 #     print("--- Precise test completed without Python exceptions. Awaiting LeakSanitizer result. ---")
 
 
-# def test_preprocess(epochs_segmented,pbm3c2_correspondences_file):
-#     epoch0, epoch1 = epochs_segmented
-#     correspondences_file = pbm3c2_correspondences_file
+def test_preprocess(epochs_segmented,pbm3c2_correspondences_file):
+    epoch0, epoch1 = epochs_segmented
+    correspondences_file = pbm3c2_correspondences_file
 
-#     alg = py4dgeo.PBM3C2(registration_error=0.01)
-#     epoch0_preprocessed, epoch1_preprocessed, correspondences_df =alg.preprocess_epochs(epoch0, epoch1, correspondences_file)
+    alg = py4dgeo.PBM3C2(registration_error=0.01)
+    epoch0_preprocessed, epoch1_preprocessed, correspondences_df =alg.preprocess_epochs(epoch0, epoch1, correspondences_file)
 
-#     assert epoch0_preprocessed is not None
-#     assert epoch1_preprocessed is not None
-#     assert correspondences_df is not None
+    assert epoch0_preprocessed is not None
+    assert epoch1_preprocessed is not None
+    assert correspondences_df is not None
 
-#     assert epoch0_preprocessed.cloud.shape[0] > 0, "Preprocessed epoch0 should have points"
-#     assert epoch1_preprocessed.cloud.shape[0] > 0, "Preprocessed epoch1 should have points"
+    assert epoch0_preprocessed.cloud.shape[0] > 0, "Preprocessed epoch0 should have points"
+    assert epoch1_preprocessed.cloud.shape[0] > 0, "Preprocessed epoch1 should have points"
 
 
 
@@ -78,6 +79,25 @@ def test_knockout_stage_1_read_segment_ids(epochs_segmented):
     ids0 = np.unique(epoch0.additional_dimensions["segment_id"])
     ids1 = np.unique(epoch1.additional_dimensions["segment_id"])
     print("-> STAGE 1 PASSED (in Python)")
+
+# def test_isolated_csv_read(pbm3c2_correspondences_file):
+#     """Test ONLY the CSV reading operation"""
+#     print("\n--- Testing isolated CSV read ---")
+    
+#     # 方法 1: 原始方式
+#     # df = pd.read_csv(pbm3c2_correspondences_file, header=None)
+    
+#     # 方法 2: 使用上下文管理器
+#     with open(pbm3c2_correspondences_file, 'r') as f:
+#         df = pd.read_csv(f, header=None)
+    
+#     assert df is not None
+#     assert len(df) > 0
+    
+#     del df
+#     gc.collect()
+    
+#     print("-> CSV read test completed")
 
 # def test_knockout_stage_2_read_csv(epochs_segmented, pbm3c2_correspondences_file):
 #     """STAGE 2: Adds the pd.read_csv call."""

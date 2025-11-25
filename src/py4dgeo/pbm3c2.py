@@ -78,7 +78,10 @@ class PBM3C2:
         ids0 = np.unique(epoch0.additional_dimensions["segment_id"])
         ids1 = np.unique(epoch1.additional_dimensions["segment_id"])
 
-        correspondences_df = pd.read_csv(correspondences_file, header=None)
+        with open(correspondences_file, 'r') as f:
+            correspondences_df = pd.read_csv(f, header=None)
+
+        # correspondences_df = pd.read_csv(correspondences_file, header=None)
 
         first_row = correspondences_df.iloc[0]
         if not all(
@@ -114,7 +117,7 @@ class PBM3C2:
             
             correspondences_df.iloc[:, 1] = correspondences_df.iloc[:, 1] + offset
             print(f"Preprocessing complete. Epoch1 Segment IDs offset by {offset}.")
-            
+
             return epoch0, new_epoch1, correspondences_df
         else:
             print("No overlapping Segment IDs detected.")
