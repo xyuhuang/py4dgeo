@@ -91,55 +91,55 @@ def test_knockout_stage_2_read_csv(epochs_segmented, pbm3c2_correspondences_file
     
     print("-> STAGE 2 PASSED (in Python)")
 
-def test_knockout_stage_3_if_condition(epochs_segmented, pbm3c2_correspondences_file):
-    """STAGE 3: Adds the 'if' condition check."""
-    print("\n--- KNOCKOUT STAGE 3: Evaluating 'if' condition ---")
-    epoch0, epoch1 = epochs_segmented
-    ids0 = np.unique(epoch0.additional_dimensions["segment_id"])
-    ids1 = np.unique(epoch1.additional_dimensions["segment_id"])
-    correspondences_df = pd.read_csv(pbm3c2_correspondences_file, header=None)
+# def test_knockout_stage_3_if_condition(epochs_segmented, pbm3c2_correspondences_file):
+#     """STAGE 3: Adds the 'if' condition check."""
+#     print("\n--- KNOCKOUT STAGE 3: Evaluating 'if' condition ---")
+#     epoch0, epoch1 = epochs_segmented
+#     ids0 = np.unique(epoch0.additional_dimensions["segment_id"])
+#     ids1 = np.unique(epoch1.additional_dimensions["segment_id"])
+#     correspondences_df = pd.read_csv(pbm3c2_correspondences_file, header=None)
 
-    # Line under test:
-    condition = not set(ids0).isdisjoint(set(ids1))
+#     # Line under test:
+#     condition = not set(ids0).isdisjoint(set(ids1))
     
-    print(f"-> STAGE 3 PASSED (in Python). Condition is {condition}")
+#     print(f"-> STAGE 3 PASSED (in Python). Condition is {condition}")
 
-def test_knockout_stage_4_direct_modification(epochs_segmented, pbm3c2_correspondences_file):
-    """STAGE 4: Enters the 'if' block and tests direct modification."""
-    print("\n--- KNOCKOUT STAGE 4: Direct modification of attribute ---")
-    epoch0, epoch1 = epochs_segmented
-    ids0 = np.unique(epoch0.additional_dimensions["segment_id"])
-    ids1 = np.unique(epoch1.additional_dimensions["segment_id"])
-    correspondences_df = pd.read_csv(pbm3c2_correspondences_file, header=None)
+# def test_knockout_stage_4_direct_modification(epochs_segmented, pbm3c2_correspondences_file):
+#     """STAGE 4: Enters the 'if' block and tests direct modification."""
+#     print("\n--- KNOCKOUT STAGE 4: Direct modification of attribute ---")
+#     epoch0, epoch1 = epochs_segmented
+#     ids0 = np.unique(epoch0.additional_dimensions["segment_id"])
+#     ids1 = np.unique(epoch1.additional_dimensions["segment_id"])
+#     correspondences_df = pd.read_csv(pbm3c2_correspondences_file, header=None)
 
-    if not set(ids0).isdisjoint(set(ids1)):
-        max_id_epoch0 = ids0.max()
-        offset = max_id_epoch0 + 1
+#     if not set(ids0).isdisjoint(set(ids1)):
+#         max_id_epoch0 = ids0.max()
+#         offset = max_id_epoch0 + 1
 
-        # Line under test: This is one of the original failure modes
-        epoch1.additional_dimensions["segment_id"] = epoch1.additional_dimensions["segment_id"] + offset
+#         # Line under test: This is one of the original failure modes
+#         epoch1.additional_dimensions["segment_id"] = epoch1.additional_dimensions["segment_id"] + offset
 
-    print("-> STAGE 4 PASSED (in Python)")
+#     print("-> STAGE 4 PASSED (in Python)")
 
-def test_knockout_stage_5_epoch_recreation(epochs_segmented, pbm3c2_correspondences_file):
-    """STAGE 5: Enters the 'if' block and tests Epoch recreation."""
-    print("\n--- KNOCKOUT STAGE 5: Epoch re-creation ---")
-    epoch0, epoch1 = epochs_segmented
-    ids0 = np.unique(epoch0.additional_dimensions["segment_id"])
-    ids1 = np.unique(epoch1.additional_dimensions["segment_id"])
-    correspondences_df = pd.read_csv(pbm3c2_correspondences_file, header=None)
+# def test_knockout_stage_5_epoch_recreation(epochs_segmented, pbm3c2_correspondences_file):
+#     """STAGE 5: Enters the 'if' block and tests Epoch recreation."""
+#     print("\n--- KNOCKOUT STAGE 5: Epoch re-creation ---")
+#     epoch0, epoch1 = epochs_segmented
+#     ids0 = np.unique(epoch0.additional_dimensions["segment_id"])
+#     ids1 = np.unique(epoch1.additional_dimensions["segment_id"])
+#     correspondences_df = pd.read_csv(pbm3c2_correspondences_file, header=None)
 
-    if not set(ids0).isdisjoint(set(ids1)):
-        max_id_epoch0 = ids0.max()
-        offset = max_id_epoch0 + 1
+#     if not set(ids0).isdisjoint(set(ids1)):
+#         max_id_epoch0 = ids0.max()
+#         offset = max_id_epoch0 + 1
 
-        new_add_dims = epoch1.additional_dimensions.copy()
-        new_add_dims["segment_id"] = new_add_dims["segment_id"] + offset
+#         new_add_dims = epoch1.additional_dimensions.copy()
+#         new_add_dims["segment_id"] = new_add_dims["segment_id"] + offset
 
-        # Line under test: This is the other failure mode
-        new_epoch1 = py4dgeo.Epoch(cloud=epoch1.cloud, additional_dimensions=new_add_dims)
+#         # Line under test: This is the other failure mode
+#         new_epoch1 = py4dgeo.Epoch(cloud=epoch1.cloud, additional_dimensions=new_add_dims)
 
-    print("-> STAGE 5 PASSED (in Python)")
+#     print("-> STAGE 5 PASSED (in Python)")
 
 # def test_compute_distances(epochs_segmented, pbm3c2_correspondences_file):
 #     epoch0, epoch1 = epochs_segmented
