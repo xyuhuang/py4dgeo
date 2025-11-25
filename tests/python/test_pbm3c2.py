@@ -56,45 +56,20 @@ def cleanup_after_test():
 #     print("--- Precise test completed without Python exceptions. Awaiting LeakSanitizer result. ---")
 
 
-# def test_preprocess(epochs_segmented,pbm3c2_correspondences_file):
-#     epoch0, epoch1 = epochs_segmented
-#     correspondences_file = pbm3c2_correspondences_file
-
-#     alg = py4dgeo.PBM3C2(registration_error=0.01)
-#     epoch0_preprocessed, epoch1_preprocessed, correspondences_df =alg.preprocess_epochs(epoch0, epoch1, correspondences_file)
-
-#     assert epoch0_preprocessed is not None
-#     assert epoch1_preprocessed is not None
-#     assert correspondences_df is not None
-
-#     assert epoch0_preprocessed.cloud.shape[0] > 0, "Preprocessed epoch0 should have points"
-#     assert epoch1_preprocessed.cloud.shape[0] > 0, "Preprocessed epoch1 should have points"
-
-def test_knockout_stage_2_with_cleanup(epochs_segmented, pbm3c2_correspondences_file):
-    """STAGE 2: Reading CSV file with explicit cleanup."""
-    print("\n--- KNOCKOUT STAGE 2: Reading CSV file with cleanup ---")
+def test_preprocess(epochs_segmented,pbm3c2_correspondences_file):
     epoch0, epoch1 = epochs_segmented
-    
-    try:
-        ids0 = np.unique(epoch0.additional_dimensions["segment_id"])
-        ids1 = np.unique(epoch1.additional_dimensions["segment_id"])
+    correspondences_file = pbm3c2_correspondences_file
 
-        with open(pbm3c2_correspondences_file, 'r') as f:
-            correspondences_df = pd.read_csv(f, header=None)
-        
-        print(f"Read {len(correspondences_df)} rows")
-        
-    finally:
-        # 显式清理所有局部变量
-        if 'correspondences_df' in locals():
-            del correspondences_df
-        if 'ids0' in locals():
-            del ids0
-        if 'ids1' in locals():
-            del ids1
-        gc.collect()
-    
-    print("-> STAGE 2 with cleanup PASSED (in Python)")
+    alg = py4dgeo.PBM3C2(registration_error=0.01)
+    epoch0_preprocessed, epoch1_preprocessed, correspondences_df =alg.preprocess_epochs(epoch0, epoch1, correspondences_file)
+
+    assert epoch0_preprocessed is not None
+    assert epoch1_preprocessed is not None
+    assert correspondences_df is not None
+
+    assert epoch0_preprocessed.cloud.shape[0] > 0, "Preprocessed epoch0 should have points"
+    assert epoch1_preprocessed.cloud.shape[0] > 0, "Preprocessed epoch1 should have points"
+
 
 def test_knockout_stage_1_read_segment_ids(epochs_segmented):
     """STAGE 1: Re-confirm that reading segment IDs is safe."""
