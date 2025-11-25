@@ -110,10 +110,12 @@ class PBM3C2:
             new_add_dims = epoch1.additional_dimensions.copy()
             new_add_dims["segment_id"] = new_add_dims["segment_id"] + offset
 
-            epoch1 = Epoch(cloud=epoch1.cloud, additional_dimensions=new_add_dims)
+            new_epoch1 = Epoch(cloud=epoch1.cloud, additional_dimensions=new_add_dims)
             
             correspondences_df.iloc[:, 1] = correspondences_df.iloc[:, 1] + offset
             print(f"Preprocessing complete. Epoch1 Segment IDs offset by {offset}.")
+            
+            return epoch0, new_epoch1, correspondences_df
         else:
             print("No overlapping Segment IDs detected.")
 

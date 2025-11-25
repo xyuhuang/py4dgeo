@@ -32,41 +32,41 @@ def cleanup_after_test():
             except:
                 pass
 
-def test_leak_on_reading_both_segment_ids(epochs_segmented):
-    print("--- Running precise test: Accessing segment_id from BOTH epochs ---")
+# def test_leak_on_reading_both_segment_ids(epochs_segmented):
+#     print("--- Running precise test: Accessing segment_id from BOTH epochs ---")
     
-    epoch0, epoch1 = epochs_segmented
-
-    print("Step 1: Accessing epoch0.additional_dimensions['segment_id']")
-    try:
-        ids0 = np.unique(epoch0.additional_dimensions["segment_id"])
-        print(f"--- Successfully read {len(ids0)} unique IDs from epoch0 ---")
-    except Exception as e:
-        pytest.fail(f"Test failed at epoch0 access: {e}")
-
-    print("Step 2: Accessing epoch1.additional_dimensions['segment_id']")
-    try:
-        ids1 = np.unique(epoch1.additional_dimensions["segment_id"])
-        print(f"--- Successfully read {len(ids1)} unique IDs from epoch1 ---")
-    except Exception as e:
-        pytest.fail(f"Test failed at epoch1 access: {e}")
-
-    print("--- Precise test completed without Python exceptions. Awaiting LeakSanitizer result. ---")
-
-
-# def test_preprocess(epochs_segmented,pbm3c2_correspondences_file):
 #     epoch0, epoch1 = epochs_segmented
-#     correspondences_file = pbm3c2_correspondences_file
 
-#     alg = py4dgeo.PBM3C2(registration_error=0.01)
-#     epoch0_preprocessed, epoch1_preprocessed, correspondences_df =alg.preprocess_epochs(epoch0, epoch1, correspondences_file)
+#     print("Step 1: Accessing epoch0.additional_dimensions['segment_id']")
+#     try:
+#         ids0 = np.unique(epoch0.additional_dimensions["segment_id"])
+#         print(f"--- Successfully read {len(ids0)} unique IDs from epoch0 ---")
+#     except Exception as e:
+#         pytest.fail(f"Test failed at epoch0 access: {e}")
 
-#     assert epoch0_preprocessed is not None
-#     assert epoch1_preprocessed is not None
-#     assert correspondences_df is not None
+#     print("Step 2: Accessing epoch1.additional_dimensions['segment_id']")
+#     try:
+#         ids1 = np.unique(epoch1.additional_dimensions["segment_id"])
+#         print(f"--- Successfully read {len(ids1)} unique IDs from epoch1 ---")
+#     except Exception as e:
+#         pytest.fail(f"Test failed at epoch1 access: {e}")
 
-#     assert epoch0_preprocessed.cloud.shape[0] > 0, "Preprocessed epoch0 should have points"
-#     assert epoch1_preprocessed.cloud.shape[0] > 0, "Preprocessed epoch1 should have points"
+#     print("--- Precise test completed without Python exceptions. Awaiting LeakSanitizer result. ---")
+
+
+def test_preprocess(epochs_segmented,pbm3c2_correspondences_file):
+    epoch0, epoch1 = epochs_segmented
+    correspondences_file = pbm3c2_correspondences_file
+
+    alg = py4dgeo.PBM3C2(registration_error=0.01)
+    epoch0_preprocessed, epoch1_preprocessed, correspondences_df =alg.preprocess_epochs(epoch0, epoch1, correspondences_file)
+
+    assert epoch0_preprocessed is not None
+    assert epoch1_preprocessed is not None
+    assert correspondences_df is not None
+
+    assert epoch0_preprocessed.cloud.shape[0] > 0, "Preprocessed epoch0 should have points"
+    assert epoch1_preprocessed.cloud.shape[0] > 0, "Preprocessed epoch1 should have points"
 
 
 # def test_compute_distances(epochs_segmented, pbm3c2_correspondences_file):
