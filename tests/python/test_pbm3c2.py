@@ -32,6 +32,27 @@ def cleanup_after_test():
             except:
                 pass
 
+def test_leak_on_reading_both_segment_ids(epochs_segmented):
+    print("--- Running precise test: Accessing segment_id from BOTH epochs ---")
+    
+    epoch0, epoch1 = epochs_segmented
+
+    print("Step 1: Accessing epoch0.additional_dimensions['segment_id']")
+    try:
+        ids0 = np.unique(epoch0.additional_dimensions["segment_id"])
+        print(f"--- Successfully read {len(ids0)} unique IDs from epoch0 ---")
+    except Exception as e:
+        pytest.fail(f"Test failed at epoch0 access: {e}")
+
+    print("Step 2: Accessing epoch1.additional_dimensions['segment_id']")
+    try:
+        ids1 = np.unique(epoch1.additional_dimensions["segment_id"])
+        print(f"--- Successfully read {len(ids1)} unique IDs from epoch1 ---")
+    except Exception as e:
+        pytest.fail(f"Test failed at epoch1 access: {e}")
+
+    print("--- Precise test completed without Python exceptions. Awaiting LeakSanitizer result. ---")
+
 
 # def test_preprocess(epochs_segmented,pbm3c2_correspondences_file):
 #     epoch0, epoch1 = epochs_segmented
