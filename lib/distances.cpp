@@ -1,13 +1,19 @@
-#include "py4dgeo/compute.hpp"
+#include <py4dgeo/compute.hpp>
 
-#include "py4dgeo/kdtree.hpp"
-#include "py4dgeo/openmp.hpp"
-#include "py4dgeo/py4dgeo.hpp"
-#include "py4dgeo/searchtree.hpp"
+#include <py4dgeo/openmp.hpp>
+#include <py4dgeo/py4dgeo.hpp>
+#include <py4dgeo/searchtree.hpp>
 
 #include <Eigen/Core>
 
 #include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <limits>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 namespace py4dgeo {
 
@@ -77,7 +83,7 @@ radius_workingset_finder(const WorkingSetFinderParameters& params)
   RadiusSearchResult points;
   radius_search(params.corepoint.row(0), points);
 
-  return params.epoch.cloud(points, Eigen::all);
+  return params.epoch.cloud(points, Eigen::indexing::all);
 }
 
 EigenPointCloud
@@ -115,7 +121,8 @@ cylinder_workingset_finder(const WorkingSetFinderParameters& params)
     merged.reserve(merged.capacity() + ball_points.size());
 
     // Extracting points
-    EigenPointCloud superset = params.epoch.cloud(ball_points, Eigen::all);
+    EigenPointCloud superset =
+      params.epoch.cloud(ball_points, Eigen::indexing::all);
 
     // Calculate the squared distances to the cylinder axis and to the plane
     // perpendicular to the axis that contains the corepoint
@@ -136,7 +143,7 @@ cylinder_workingset_finder(const WorkingSetFinderParameters& params)
   }
 
   // Select only those indices that are within the cylinder
-  return params.epoch.cloud(merged, Eigen::all);
+  return params.epoch.cloud(merged, Eigen::indexing::all);
 }
 
 double

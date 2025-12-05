@@ -1,14 +1,17 @@
 #pragma once
 
-#include "py4dgeo.hpp"
-#include "py4dgeo/searchtree.hpp"
+#include <py4dgeo/py4dgeo.hpp>
+#include <py4dgeo/searchtree.hpp>
 
 #include <Eigen/Core>
 
+#include <array>
+#include <cstddef>
 #include <cstdint>
-#include <istream>
+#include <iostream>
 #include <optional>
-#include <ostream>
+#include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -54,8 +57,8 @@ public:
   // ==========================================================
 
   //! Alias for the spatial key type used for Z-order value encoding
-  using SpatialKey = uint32_t; // 16-bit allows 5 depth levels, 32-bit allows 10
-                               // levels, 64-bit allows 21 levels
+  using SpatialKey = std::uint32_t; // 16-bit allows 5 depth levels, 32-bit
+                                    // allows 10 levels, 64-bit allows 21 levels
 
   //! Return type used for points
   using PointContainer = std::vector<IndexType>;
@@ -99,15 +102,22 @@ private:
       return arr;
     }();
 
-  //! Generic 8-bit dilation table already built:
+  // Precomputed dilation tables for fast spatial key encoding.
+  // These tables map compact N-bit indices to interleaved bit patterns.
+  // Used in compute_spatial_key(), avoiding runtime bit-manipulation.
+
+  //! Lookup table for dilating 8-bit spatial keys (256 entries), computed at
+  //! compile time.
   inline static constexpr auto dilate8_table =
     make_dilate_table<SpatialKey, 8>(); // 256 entries
 
-  //! Generic 5-bit dilation table already built:
+  //! Lookup table for dilating 5-bit spatial keys (32 entries), computed at
+  //! compile time
   inline static constexpr auto dilate5_table =
     make_dilate_table<SpatialKey, 5>(); // 32 entries
 
-  //! Generic 2-bit dilation table already built:
+  //! Lookup table for dilating 2-bit spatial keys (4 entries), computed at
+  //! compile time
   inline static constexpr auto dilate2_table =
     make_dilate_table<SpatialKey, 2>(); // 4 entries
 
@@ -235,8 +245,22 @@ private:
    *
    * The computed bounding box is stored in `min_point`, `max_point`, and
    * `box_size`.
+   *
+   * @param force_cubic If true, the bounding box will be forced to have equal
+   * side lengths, resulting in a cubic shape.
+   *
+   * @param min_corner Optional minimum point (lower corner of the bounding
+   * box). If not provided, the minimum point is computed automatically from the
+   * input data.
+   *
+   * @param max_corner Optional maximum point (upper corner of the bounding
+   * box). If not provided, the maximum point is computed automatically from the
+   * input data.
    */
-  void compute_bounding_box();
+  void compute_bounding_box(
+    bool force_cubic = false,
+    std::optional<Eigen::Vector3d> min_corner = std::nullopt,
+    std::optional<Eigen::Vector3d> max_corner = std::nullopt);
 
   /** @brief Computes the average cell properties at all depth levels. */
   void compute_statistics();
@@ -347,8 +371,22 @@ public:
    *
    * This initializes the Octree search index. Calling this method is required
    * before performing any nearest neighbors or radius searches.
+   *
+   * @param force_cubic If true, the bounding box will be forced to have equal
+   * side lengths, resulting in a cubic shape.
+   *
+   * @param min_corner Optional minimum point (lower corner of the bounding
+   * box). If not provided, the minimum point is computed automatically from the
+   * input data.
+   *
+   * @param max_corner Optional maximum point (upper corner of the bounding
+   * box). If not provided, the maximum point is computed automatically from the
+   * input data.
+   *
    */
-  void build_tree();
+  void build_tree(bool force_cubic = false,
+                  std::optional<Eigen::Vector3d> min_corner = std::nullopt,
+                  std::optional<Eigen::Vector3d> max_corner = std::nullopt);
 
   /**
    * @brief Clears the Octree structure, effectively resetting it
@@ -505,7 +543,7 @@ public:
   // ======================================================================
 
   /**
-   * @brief Returns the first occurrence of theindex of a cell in the sorted
+   * @brief Returns the first occurrence of the index of a cell in the sorted
    * array of point indices and point spatial keys
    *
    * @param key The spatial key of the query cell
@@ -523,7 +561,7 @@ public:
                                                 IndexType end_index) const;
 
   /**
-   * @brief Returns the last occurrence of theindex of a cell in the sorted
+   * @brief Returns the last occurrence of the index of a cell in the sorted
    * array of point indices and point spatial keys
    *
    * @param truncated_key The spatial key of the query cell
