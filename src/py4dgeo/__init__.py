@@ -35,3 +35,12 @@ initialize_openmp_defaults()
 
 from py4dgeo.pbm3c2 import PBM3C2
 from py4dgeo.vapc import Vapc, enable_trace, enable_timeit
+from py4dgeo.tam3c2 import (
+    TAM3C2,
+    Weighting,
+    sweep_space_time_ratio,
+    estimate_space_time_ratio,
+    read_epochs_from_folder,
+    extract_reference_and_others,
+    sample_corepoints,
+)
