@@ -60,8 +60,6 @@ Typical workflow
     analysis.add_epochs(*others)
 """
 
-from __future__ import annotations
-
 import logging
 import os
 import re
@@ -79,24 +77,12 @@ from py4dgeo.util import Py4DGeoError
 
 logger = logging.getLogger("py4dgeo")
 
-
-# ---------------------------------------------------------------------------
-# Weighting modes
-# ---------------------------------------------------------------------------
-
-
 class Weighting(Enum):
     """Weighting scheme applied to aggregated points for mean projection / LoD."""
 
     NONE = "none"
     LINEAR = "linear"
     GAUSSIAN = "gaussian"
-
-
-# ---------------------------------------------------------------------------
-# TAM3C2 algorithm
-# ---------------------------------------------------------------------------
-
 
 class TAM3C2(M3C2LikeAlgorithm):
     """Time-Adaptive M3C2.
@@ -210,8 +196,6 @@ class TAM3C2(M3C2LikeAlgorithm):
     def name(self):
         return "TAM3C2"
 
-    # -- helpers --------------------------------------------------------------
-
     @staticmethod
     def _as_list(x):
         if isinstance(x, (list, tuple, np.ndarray)):
@@ -230,8 +214,6 @@ class TAM3C2(M3C2LikeAlgorithm):
             if e is epoch or e.timestamp == epoch.timestamp:
                 return i
         return None
-
-    # -- aggregation primitives ----------------------------------------------
 
     def _aggregate_sphere(self, cp, center_time, exclude_idx, radius, max_window):
         """Greedy nearest-first temporal aggregation of a spherical neighborhood.
@@ -359,7 +341,6 @@ class TAM3C2(M3C2LikeAlgorithm):
             w_used,
         )
 
-    # -- PCA normal / planarity ----------------------------------------------
 
     def _planarity_and_normal(self, pts):
         if pts is None or len(pts) < 3:
@@ -374,7 +355,6 @@ class TAM3C2(M3C2LikeAlgorithm):
             normal = -normal
         return planarity, normal
 
-    # -- scale selection on reference ----------------------------------------
 
     def _ensure_ref_scale_cache(self, ref_epoch: Epoch):
         """Per-corepoint multi-scale selection on the reference epoch.
@@ -463,7 +443,6 @@ class TAM3C2(M3C2LikeAlgorithm):
             )
         return self._ref_normals
 
-    # -- weights & distance ---------------------------------------------------
 
     def _compute_weights(self, dt_array, pts, cp, window_size, spatial_r):
         if self.weighting == Weighting.NONE:
@@ -542,7 +521,6 @@ class TAM3C2(M3C2LikeAlgorithm):
 
         return dist, uncertainty
 
-    # -- main API ------------------------------------------------------------
 
     def calculate_distances(self, epoch1, epoch2, searchtree=None):
         """Time-adaptive M3C2 distance between ``epoch1`` (ref) and ``epoch2`` (tgt).
@@ -554,7 +532,7 @@ class TAM3C2(M3C2LikeAlgorithm):
         if self.corepoints is None:
             raise Py4DGeoError("TAM3C2 requires corepoints to be set.")
 
-        self._ensure_ref_scale_cache(epoch1)
+        self._ensure_ref_scale_cache(epoch1) # scale selection on reference epoch (sphere aggregation)
         n_cp = self.corepoints.shape[0]
 
         ref_idx = self._find_epoch_index(epoch1)
@@ -667,7 +645,6 @@ class TAM3C2(M3C2LikeAlgorithm):
 
         return distances, uncertainties
 
-    # -- diagnostics ---------------------------------------------------------
 
     def diagnostics(self):
         """Return per-target diagnostics as ``(n_cp, n_targets)`` matrices."""
@@ -700,10 +677,6 @@ class TAM3C2(M3C2LikeAlgorithm):
             )
         np.savez(path, **arrays)
 
-
-# ---------------------------------------------------------------------------
-# IO / corepoint helpers (independent functions)
-# ---------------------------------------------------------------------------
 
 
 # Match YYMMDD or YYMMDD_HHMMSS in a filename
@@ -826,11 +799,6 @@ def sample_corepoints(
         return cloud[idx]
 
     raise ValueError(f"Unknown corepoint sampling method: {method!r}")
-
-
-# ---------------------------------------------------------------------------
-# Space-time anisotropy ratio selection
-# ---------------------------------------------------------------------------
 
 
 def sweep_space_time_ratio(
@@ -1074,7 +1042,6 @@ def estimate_space_time_ratio(
         "tolerance": float(tolerance),
         "stable_threshold": float(stable_threshold),
     }
-
 
 
 

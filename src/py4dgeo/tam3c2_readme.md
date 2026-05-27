@@ -394,50 +394,25 @@ After step 5, `analysis.distances` has shape `(n_corepoints, n_targets)` and `an
 
 ### 7.1 Choosing `space_time_ratio` — `sweep_space_time_ratio` and `estimate_space_time_ratio`
 
-The single most impactful TAM3C2 parameter is the **spacetime anisotropy ratio** $r_{st}$ = `space_time_ratio`. Increasing it widens the *effective* temporal aggregation window and lowers LoD; pushing it too far lets real surface evolution leak into the spread used by the LoD formula. The module ships a data-driven selector that walks this trade-off using only quantities M3C2 already computes (no ground truth required).
+`space_time_ratio` is the most impactful TAM3C2 parameter. Increasing it widens the *effective* temporal aggregation window and lowers LoD; pushing it too far lets real surface evolution leak into the M3C2 within-neighbourhood spread that the LoD formula uses. The module ships a data-driven selector that walks this trade-off using only quantities M3C2 already computes (no ground truth required).
 
-**Variance decomposition.** On a stable corepoint, the along-normal projections aggregated into one M3C2 side have
+**Why we look at the spread on stable corepoints.** The within-neighbourhood spread that M3C2 reports (`uncertainties.spread1` / `spread2`) has two contributions: the genuine geometric roughness of the surface inside the neighbourhood — which is exactly what the M3C2 LoD formula is designed to absorb — and any actual surface motion that the temporal aggregation pulls into the same neighbourhood. On a corepoint that does not change over the whole time series, the second contribution should stay close to zero, *unless* the temporal weighting is generous enough to drag in microscopic drift. Watching how the mean spread on stable corepoints evolves as `space_time_ratio` grows therefore isolates this contamination, without needing any ground-truth change information.
 
-$$
-\mathrm{Var}(p) \;=\; \underbrace{\sigma_{\mathrm{geom}}^{2}}_{\text{intra-epoch roughness}}
-                  \;+\; \underbrace{\mathrm{Var}_{e}\!\bigl(\bar{p}_{e}\bigr)}_{\text{inter-epoch drift contamination}}
-$$
+**Selection rule.** Call *stable-spread* the mean of `spread1` and `spread2` taken over the set of stable corepoints (those whose maximum absolute distance across all targets stays below `stable_threshold`) and over all evaluated targets. Compute it for every candidate ratio, take the smallest candidate ratio as the **baseline** (it does the least temporal smoothing, so its stable-spread approximates the pure geometric-noise floor), and pick the **largest** candidate ratio whose stable-spread is at most `(1 + tolerance)` times that baseline (default `tolerance = 0.1`, i.e. at most 10% above the baseline). If no candidate qualifies, the candidate with the smallest stable-spread is returned and `constraint_satisfied = False` is flagged.
 
-(law of total variance, $e$ indexes epochs). The first term is what the LoD formula assumes; the second only appears when temporal aggregation mixes in drift. Watching how the M3C2 spread $s_{\text{ref}}, s_{\text{tgt}}$ behaves on *stable* corepoints as we sweep $r_{st}$ therefore isolates the contamination.
+**`sweep_space_time_ratio(ratios, *, epochs_timeseries, reference_epoch, target_epochs, corepoints, tam_kwargs=None)`** — low-level driver. For every ratio in `ratios` it builds a fresh `TAM3C2(space_time_ratio=r, **tam_kwargs)` and calls `calculate_distances` on every target, returning a list of dicts with the full `(n_cp, n_targets)` matrices of distances, `spread1` / `spread2`, `lod95`, `num_samples1` / `num_samples2`.
 
-**Spread-inflation criterion.** Let $\mathcal{S}$ be the set of stable corepoints (max $|d|$ over time below `stable_threshold`) and $T$ the number of evaluated targets. Define
-
-$$
-\bar s(r_{st}) \;=\; \frac{1}{|\mathcal{S}|}\sum_{cp\in\mathcal{S}}\frac{1}{T}\sum_{k=1}^{T}\tfrac{1}{2}\bigl(s_{\text{ref}}(cp,k;r_{st}) + s_{\text{tgt}}(cp,k;r_{st})\bigr)
-$$
-
-and the **spread-inflation ratio**
-
-$$
-\rho(r_{st}) \;=\; \frac{\bar s(r_{st})}{\bar s(r_{st}^{\min})},
-$$
-
-where $r_{st}^{\min}$ is the smallest ratio in the candidate grid (used as the geometric-noise baseline). The selection rule is
-
-$$
-r_{st}^{\star} \;=\; \max\bigl\{\, r_{st}\in\mathcal{C} \,:\, \rho(r_{st}) \le 1 + \tau \,\bigr\},
-$$
-
-i.e. **the largest candidate ratio whose stable spread is at most $\tau$ above baseline** (default $\tau = 0.1$). If no candidate satisfies the bound, the one with the smallest $\rho$ is returned with `constraint_satisfied = False`.
-
-**`sweep_space_time_ratio(ratios, *, epochs_timeseries, reference_epoch, target_epochs, corepoints, tam_kwargs=None)`** — low-level driver. For every $r_{st}$ in `ratios` it builds a fresh `TAM3C2(space_time_ratio=r_st, **tam_kwargs)` and calls `calculate_distances` on every target, returning a list of dicts with the full `(n_cp, n_targets)` matrices of distances, `spread1` / `spread2`, `lod95`, `num_samples1` / `num_samples2`.
-
-**`estimate_space_time_ratio(*, epochs_timeseries, reference_epoch, target_epochs, corepoints, tam_kwargs=None, candidate_ratios=(0.5, 1.0, 2.0, 4.0), tolerance=0.1, stable_threshold=0.05)`** — runs the sweep, derives the stable mask from the smallest-ratio run, computes $\rho(r_{st})$ for every candidate, and returns
+**`estimate_space_time_ratio(*, epochs_timeseries, reference_epoch, target_epochs, corepoints, tam_kwargs=None, candidate_ratios=(0.5, 1.0, 2.0, 4.0), tolerance=0.1, stable_threshold=0.05)`** — runs the sweep, derives the stable mask from the smallest-ratio run, computes the stable-spread for every candidate, applies the selection rule above, and returns
 
 | key | meaning |
 |---|---|
-| `best_ratio` | the chosen $r_{st}^{\star}$ |
-| `report` | list[dict] with `space_time_ratio`, `rho`, `mean_spread`, `mean_lod95`, `mean_num_samples` |
+| `best_ratio` | the chosen `space_time_ratio` |
+| `report` | list[dict] with `space_time_ratio`, `rho` (= stable-spread divided by the baseline stable-spread), `mean_spread`, `mean_lod95`, `mean_num_samples` |
 | `sweep_results` | raw output of `sweep_space_time_ratio` (for plotting per-corepoint maps) |
 | `stable_mask` | bool array of corepoints used in the baseline |
-| `baseline_ratio` | the $r_{st}$ used as $\rho = 1$ |
-| `baseline_mean_spread` | $\bar s(r_{st}^{\min})$ |
-| `constraint_satisfied` | `True` iff at least one candidate met $\rho \le 1+\tau$ |
+| `baseline_ratio` | the smallest candidate ratio (used as the stable-spread reference) |
+| `baseline_mean_spread` | stable-spread at `baseline_ratio` |
+| `constraint_satisfied` | `True` iff at least one candidate stayed within `1 + tolerance` of the baseline |
 | `tolerance`, `stable_threshold` | echoed inputs |
 
 Minimal usage:
@@ -473,7 +448,7 @@ for r in result["report"]:
           f"mean LoD95={r['mean_lod95']:.4f}  N_eff={r['mean_num_samples']:.1f}")
 ```
 
-A worked example with diagnostic plots ($\rho(r_{st})$, mean LoD$_{95}$, mean $N_{\text{eff}}$) lives in `jupyter/space_time_ratio_analysis.ipynb`.
+A worked example with diagnostic plots (relative stable-spread, mean LoD$_{95}$, mean $N_{\text{eff}}$ as functions of `space_time_ratio`) lives in `jupyter/space_time_ratio_analysis.ipynb`.
 
 > **Tip — pick targets with non-trivial time gaps.** `max_window = |t_target − t_ref| · max_window_ratio`. Targets very close to the reference (gap ≲ one inter-epoch step) yield empty cylinders and all-NaN spreads, which `estimate_space_time_ratio` then has to ignore via `nanmean`. Prefer evenly spaced targets across the full time range, e.g. `np.linspace(0, len(others)-1, 30, dtype=int)`.
 
