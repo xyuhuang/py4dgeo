@@ -45,3 +45,4 @@ from py4dgeo.tam3c2 import (
     extract_reference_and_others,
     sample_corepoints,
 )
+from py4dgeo.sor import statistical_outlier_removal

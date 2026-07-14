@@ -21,11 +21,12 @@ jobs:
         with:
           name: py4dgeo
           dois:
-            10.5281/zenodo.18378272/
+            10.5281/zenodo.18432391/
           filename-whitelist: |
-            usage_data.zip
-            synthetic.zip
             pbm3c2.zip
+            synthetic.zip
+            usage_data.zip
+            trier_sim.zip
           extract: true
           extract-dir: extracted
 
@@ -41,7 +42,7 @@ jobs:
         openmp: ['ON', 'OFF']
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: 'recursive'
 
@@ -97,7 +98,7 @@ jobs:
     needs: [pooch-cache-setup]
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: 'recursive'
 
@@ -146,7 +147,7 @@ jobs:
         python -m pytest --cov=src --cov-report=xml --cov-report=term
 
     - name: Upload C++ coverage to Codecov
-      uses: codecov/codecov-action@v6
+      uses: codecov/codecov-action@v7
 
       with:
         files: ./cxx-coverage.xml
@@ -157,7 +158,7 @@ jobs:
         working-directory: ${{runner.workspace}}/py4dgeo
 
     - name: Upload Python coverage to Codecov
-      uses: codecov/codecov-action@v6
+      uses: codecov/codecov-action@v7
 
       with:
         files: ./coverage.xml
@@ -176,7 +177,7 @@ jobs:
       ASAN_OPTIONS: "detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1"
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: 'recursive'
 
