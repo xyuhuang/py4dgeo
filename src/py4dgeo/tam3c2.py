@@ -118,6 +118,10 @@ class TAM3C2(M3C2LikeAlgorithm):
         :func:`estimate_space_time_ratio`.
     orientation_vector : array-like of shape (3,)
         Reference up direction used to orient normals.
+    include_center_epoch : bool
+        If True, include the epoch centered on the aggregation time in the
+        spherical and cylindrical neighborhoods. If False, skip that epoch and
+        aggregate only from neighboring epochs. Default True.
     keep_neighborhoods : bool
         If True, store per-(corepoint, target) aggregated points/weights in
         ``self._neighborhoods`` (memory-heavy; for debugging/visualization).
@@ -137,6 +141,7 @@ class TAM3C2(M3C2LikeAlgorithm):
         sigma_ratio: float = 1.0,
         space_time_ratio: float = 1.0,
         orientation_vector=np.array([0.0, 0.0, 1.0]),
+        include_center_epoch=True,
         keep_neighborhoods: bool = False,
         **kwargs,
     ):
@@ -164,6 +169,7 @@ class TAM3C2(M3C2LikeAlgorithm):
             )
         self.space_time_ratio = float(space_time_ratio)
         self.orientation_vector = np.asarray(orientation_vector, dtype=float).reshape(3)
+        self.include_center_epoch = bool(include_center_epoch)
         self.keep_neighborhoods = bool(keep_neighborhoods)
 
         # Index cache
@@ -373,6 +379,7 @@ class TAM3C2(M3C2LikeAlgorithm):
 
         n_cp = self.corepoints.shape[0]
         ref_idx = self._find_epoch_index(ref_epoch)
+        scale_exclude_idx = None if self.include_center_epoch else ref_idx
         ref_time = ref_epoch.timestamp.timestamp()
 
         normal_radii = self._as_list(self.normal_radii)
@@ -408,7 +415,7 @@ class TAM3C2(M3C2LikeAlgorithm):
             mw = time_range * wr
             for i in range(n_cp):
                 pts, _, _, _, _, _ = self._aggregate_sphere(
-                    self.corepoints[i], ref_time, ref_idx, sr, mw
+                    self.corepoints[i], ref_time, scale_exclude_idx, sr, mw
                 )
                 if pts is None or len(pts) < 3:
                     continue
@@ -537,6 +544,8 @@ class TAM3C2(M3C2LikeAlgorithm):
 
         ref_idx = self._find_epoch_index(epoch1)
         tgt_idx = self._find_epoch_index(epoch2)
+        ref_exclude_idx = None if self.include_center_epoch else ref_idx
+        tgt_exclude_idx = None if self.include_center_epoch else tgt_idx
         ref_time = epoch1.timestamp.timestamp()
         tgt_time = epoch2.timestamp.timestamp()
 
@@ -579,11 +588,11 @@ class TAM3C2(M3C2LikeAlgorithm):
             max_window = time_gap * wr
 
             ref_pack = self._aggregate_cylinder(
-                cp, normal, ref_time, ref_idx,
+                cp, normal, ref_time, ref_exclude_idx,
                 self.cyl_radius, self.max_distance, max_window,
             )
             tgt_pack = self._aggregate_cylinder(
-                cp, normal, tgt_time, tgt_idx,
+                cp, normal, tgt_time, tgt_exclude_idx,
                 self.cyl_radius, self.max_distance, max_window,
             )
             ref_pts, ref_dt, ref_eidx, b_r, a_r, w_r = ref_pack
