@@ -491,8 +491,8 @@ class TAM3C2(M3C2LikeAlgorithm):
         if ref_w is None:
             m_r = pr.mean()
             m_t = pt.mean()
-            s_r = pr.std(ddof=0)
-            s_t = pt.std(ddof=0)
+            s_r = pr.std(ddof=1)
+            s_t = pt.std(ddof=1)
             n_r = float(len(pr))
             n_t = float(len(pt))
         else:
@@ -610,8 +610,8 @@ class TAM3C2(M3C2LikeAlgorithm):
             valid = (
                 ref_pts is not None
                 and tgt_pts is not None
-                and len(ref_pts) >= self.required_points
-                and len(tgt_pts) >= self.required_points
+                and len(ref_pts) >= 2
+                and len(tgt_pts) >= 2
             )
 
             if valid:
