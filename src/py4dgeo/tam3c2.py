@@ -78,7 +78,7 @@ from py4dgeo.util import Py4DGeoError
 logger = logging.getLogger("py4dgeo")
 
 class Weighting(Enum):
-    """Weighting scheme applied to aggregated points for mean projection / LoD."""
+    """Weighting scheme applied."""
 
     NONE = "none"
     LINEAR = "linear"
