@@ -122,6 +122,11 @@ class TAM3C2(M3C2LikeAlgorithm):
         If True, include the epoch centered on the aggregation time in the
         spherical and cylindrical neighborhoods. If False, skip that epoch and
         aggregate only from neighboring epochs. Default True.
+    spatial_weighting : bool
+        If True, apply the spatial part of the weighting kernel using the
+        radial distance perpendicular to the M3C2 normal. If False, apply only
+        the temporal part of the weighting kernel. Center-epoch points keep
+        unit weight in both cases. Default True.
     keep_neighborhoods : bool
         If True, store per-(corepoint, target) aggregated points/weights in
         ``self._neighborhoods`` (memory-heavy; for debugging/visualization).
@@ -142,6 +147,7 @@ class TAM3C2(M3C2LikeAlgorithm):
         space_time_ratio: float = 1.0,
         orientation_vector=np.array([0.0, 0.0, 1.0]),
         include_center_epoch=True,
+        spatial_weighting: bool = True,
         keep_neighborhoods: bool = False,
         **kwargs,
     ):
@@ -170,6 +176,7 @@ class TAM3C2(M3C2LikeAlgorithm):
         self.space_time_ratio = float(space_time_ratio)
         self.orientation_vector = np.asarray(orientation_vector, dtype=float).reshape(3)
         self.include_center_epoch = bool(include_center_epoch)
+        self.spatial_weighting = bool(spatial_weighting)
         self.keep_neighborhoods = bool(keep_neighborhoods)
 
         # Index cache
@@ -451,10 +458,16 @@ class TAM3C2(M3C2LikeAlgorithm):
         return self._ref_normals
 
 
-    def _compute_weights(self, dt_array, pts, cp, window_size, spatial_r):
+    def _compute_weights(
+        self, dt_array, pts, cp, normal, epoch_indices, center_epoch_idx,
+        window_size, spatial_r,
+    ):
         if self.weighting == Weighting.NONE:
             return None
-        d_spatial = np.linalg.norm(pts - cp, axis=1)
+        offsets = pts - cp
+        along = offsets @ normal
+        radial_sq = np.einsum("ij,ij->i", offsets, offsets) - along * along
+        d_spatial = np.sqrt(np.maximum(radial_sq, 0.0))
         d_time = np.abs(dt_array)
 
         # Effective temporal window after spacetime-anisotropy rescaling:
@@ -465,7 +478,10 @@ class TAM3C2(M3C2LikeAlgorithm):
         win_eff = window_size * r_st
 
         if self.weighting == Weighting.LINEAR:
-            ws = np.clip(1.0 - d_spatial / spatial_r, 0.0, 1.0)
+            if self.spatial_weighting:
+                ws = np.clip(1.0 - d_spatial / spatial_r, 0.0, 1.0)
+            else:
+                ws = np.ones_like(d_spatial)
             if win_eff > 0:
                 wt = np.clip(1.0 - d_time / win_eff, 0.0, 1.0)
             else:
@@ -473,7 +489,10 @@ class TAM3C2(M3C2LikeAlgorithm):
             w = ws * wt
         else:  # GAUSSIAN
             sigma = self.sigma_ratio if self.sigma_ratio > 0 else 1.0
-            ws = np.exp(-((d_spatial / spatial_r) ** 2) / (2.0 * sigma * sigma))
+            if self.spatial_weighting:
+                ws = np.exp(-((d_spatial / spatial_r) ** 2) / (2.0 * sigma * sigma))
+            else:
+                ws = np.ones_like(d_spatial)
             if win_eff > 0:
                 wt = np.exp(-((d_time / win_eff) ** 2) / (2.0 * sigma * sigma))
             else:
@@ -482,6 +501,8 @@ class TAM3C2(M3C2LikeAlgorithm):
 
         if not np.any(w > 0):  # degenerate
             w = np.ones_like(w)
+        if center_epoch_idx is not None:
+            w[epoch_indices == center_epoch_idx] = 1.0
         return w
 
     def _m3c2_and_lod(self, cp, normal, ref_pts, ref_w, tgt_pts, tgt_w):
@@ -615,8 +636,14 @@ class TAM3C2(M3C2LikeAlgorithm):
             )
 
             if valid:
-                ref_w = self._compute_weights(ref_dt, ref_pts, cp, max_window, sr)
-                tgt_w = self._compute_weights(tgt_dt, tgt_pts, cp, max_window, sr)
+                ref_w = self._compute_weights(
+                    ref_dt, ref_pts, cp, normal, ref_eidx, ref_idx,
+                    max_window, self.cyl_radius,
+                )
+                tgt_w = self._compute_weights(
+                    tgt_dt, tgt_pts, cp, normal, tgt_eidx, tgt_idx,
+                    max_window, self.cyl_radius,
+                )
                 d, u = self._m3c2_and_lod(cp, normal, ref_pts, ref_w, tgt_pts, tgt_w)
                 distances[i] = d
                 uncertainties[i] = u
