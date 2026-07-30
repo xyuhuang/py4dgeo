@@ -459,7 +459,7 @@ class TAM3C2(M3C2LikeAlgorithm):
 
 
     def _compute_weights(
-        self, dt_array, pts, cp, normal, epoch_indices, center_epoch_idx,
+        self, dt_array, pts, cp, normal,
         window_size, spatial_r,
     ):
         if self.weighting == Weighting.NONE:
@@ -501,8 +501,6 @@ class TAM3C2(M3C2LikeAlgorithm):
 
         if not np.any(w > 0):  # degenerate
             w = np.ones_like(w)
-        if center_epoch_idx is not None:
-            w[epoch_indices == center_epoch_idx] = 1.0
         return w
 
     def _m3c2_and_lod(self, cp, normal, ref_pts, ref_w, tgt_pts, tgt_w):
@@ -637,11 +635,11 @@ class TAM3C2(M3C2LikeAlgorithm):
 
             if valid:
                 ref_w = self._compute_weights(
-                    ref_dt, ref_pts, cp, normal, ref_eidx, ref_idx,
+                    ref_dt, ref_pts, cp, normal, 
                     max_window, self.cyl_radius,
                 )
                 tgt_w = self._compute_weights(
-                    tgt_dt, tgt_pts, cp, normal, tgt_eidx, tgt_idx,
+                    tgt_dt, tgt_pts, cp, normal, 
                     max_window, self.cyl_radius,
                 )
                 d, u = self._m3c2_and_lod(cp, normal, ref_pts, ref_w, tgt_pts, tgt_w)
