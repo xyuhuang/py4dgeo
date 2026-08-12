@@ -177,3 +177,13 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# tam3c2-dev
+src/py4dgeo/tam3c2_readme.md
+jupyter/sand_dune_analysis.ipynb
+jupyter/sand_dune_reference.ipynb
+jupyter/test_S1_uls_tam3c2.ipynb
+src/py4dgeo/sand_dune_obj_analysis.py
+jupyter/space_time_ratio_analysis.ipynb
+jupyter/sand_dune_comparison.ipynb
+*.zip
